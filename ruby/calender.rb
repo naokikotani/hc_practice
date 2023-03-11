@@ -1,47 +1,39 @@
+require 'optparse'
 require 'date'
 
-return puts "#{ARGV[2]} is neither a month number (1..12) nor a name" unless ARGV[2].to_i.between?(1, 12) || ARGV[2] == nil
+options = { month: nil }
+WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+SPACES = ['                  ', '', '   ', '      ', '         ', '            ', '               '].freeze
 
-beginning_of_month = ARGV[2] == nil ? Date.new(2023, Date.today.month, 1) : Date.new(2023, ARGV[2].to_i, 1)
-ending_of_month = ARGV[2] == nil ? Date.new(2023, Date.today.month, -1) : Date.new(2023, ARGV[2].to_i, -1)
-days_ary = (1..ending_of_month.day).to_a
+OptionParser.new do |opts|
+  opts.on('-m [MONTH]', Integer) {|m| options[:month] = m }
+end.parse!
 
-def date_formatting(days_ary, remainder)
-  result = days_ary.map do |day|
+month = options[:month] || Date.today.month
+
+unless month.between?(1, 12)
+  puts "#{month} is neither a month number (1..12) nor a name"
+  exit
+end
+
+def format_days(days_ary, remainder)
+  days_ary.map do |day|
     if day % 7 == remainder
-      day.to_s.length == 1 ? " #{day}\n" : "#{day}\n"
-    elsif day.to_s.length == 1
-      " #{day} "
+      "#{day.to_s.rjust(2)}\n"
     else
-      "#{day} "
+      "#{day.to_s.rjust(2)} "
     end
-  end
-
-  result.join()
+  end.join()
 end
 
-case beginning_of_month.wday
-when 0
-  hoge = "                  " + date_formatting(days_ary, 1)
-when 1
-  hoge = "" + date_formatting(days_ary, 0)
-when 2
-  hoge = "   " + date_formatting(days_ary, 6)
-when 3
-  hoge = "      " + date_formatting(days_ary, 5)
-when 4
-  hoge = "         " + date_formatting(days_ary, 4)
-when 5
-  hoge = "            " + date_formatting(days_ary, 3)
-when 6
-  hoge = "               " + date_formatting(days_ary, 2)
-else
-  return
-end
+beginning_of_month = Date.new(2023, month, 1)
+days_ary = (1..beginning_of_month.next_month.prev_day.day).to_a
+
+calender = SPACES[beginning_of_month.wday] + format_days(days_ary, (8 - beginning_of_month.wday) % 7)
 
 result = "   #{beginning_of_month.strftime("%B")} 2023
-Mo Tu We Th Fr Sa Su
-#{hoge}
+#{['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].join(' ')}
+#{calender}
 "
 
-puts(result)
+puts result
